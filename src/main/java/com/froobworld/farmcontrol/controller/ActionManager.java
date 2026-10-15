@@ -21,6 +21,7 @@ public class ActionManager {
         addAction(new DisableBreedingAction(new BreedingBlocker(farmControl)));
         if (farmControl.getHookManager().getNmsHooks().getMobGoalNmsHook() != null) {
             addAction(new RemoveRandomMovementAction(farmControl.getHookManager().getNmsHooks().getMobGoalNmsHook()));
+            farmControl.getLogger().info("remove-random-movement available (validated goal-selector structure).");
         } else {
             farmControl.getLogger().warning("The remove-random-movement action is not available on this version.");
         }

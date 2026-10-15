@@ -33,7 +33,6 @@ public abstract class BaseMobGoalNmsHook implements MobGoalNmsHook {
         this.randomMovementClassNames = randomMovementClassNames;
         initWrappedGoalsGetter();
         initGoalUnwrapper();
-        initWrappedGoalsGetter();
         initRandomMovementGoalClasses();
     }
 
@@ -94,7 +93,9 @@ public abstract class BaseMobGoalNmsHook implements MobGoalNmsHook {
             if (!foundField) {
                 compatible = false; // couldn't find a matching field
             }
-        } catch (ClassNotFoundException ignored) {}
+        } catch (ClassNotFoundException | LinkageError ignored) {
+            compatible = false;
+        }
     }
 
     private void initGoalUnwrapper() {
@@ -115,16 +116,20 @@ public abstract class BaseMobGoalNmsHook implements MobGoalNmsHook {
             if (!foundField) {
                 compatible = false; // couldn't find a matching field
             }
-        } catch (ClassNotFoundException ignored) {}
+        } catch (ClassNotFoundException | LinkageError ignored) {
+            compatible = false;
+        }
     }
 
     private void initRandomMovementGoalClasses() {
-        try {
-            for (String className : randomMovementClassNames) {
+        for (String className : randomMovementClassNames) {
+            try {
                 randomMovementGoalClasses.add(Class.forName(className));
+            } catch (ClassNotFoundException | LinkageError ignored) {
+                // Partial support would silently leave some animals unoptimized.
+                compatible = false;
             }
-
-        } catch (Exception ignored) {}
+        }
         if (randomMovementGoalClasses.isEmpty()) {
             compatible = false; // none of our random movement classes exist
         }

@@ -8,11 +8,15 @@ import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class SnapshotEntity {
-    private static final AtomicBoolean useWoodType = new AtomicBoolean(false);
     private final Entity entity;
+    private final EntityType entityType;
+    private final Class<? extends Entity> entityClass;
+    private final Set<String> metadata;
+    private final boolean pluginProtected;
     private final int entityId;
     private final Vector location;
     private final FcData fcData;
@@ -26,8 +30,12 @@ public class SnapshotEntity {
     private final boolean mounted;
     private final List<Object> classifications = new ArrayList<>();
 
-    public SnapshotEntity(Entity entity) {
+    public SnapshotEntity(Entity entity, List<String> metadataKeys, boolean pluginProtected) {
         this.entity = entity;
+        this.entityType = entity.getType();
+        this.entityClass = entity.getClass();
+        this.metadata = metadataKeys.stream().filter(entity::hasMetadata).collect(Collectors.toUnmodifiableSet());
+        this.pluginProtected = pluginProtected;
         this.entityId = entity.getEntityId();
         this.location = entity.getLocation().toVector();
         this.fcData = FcData.get(entity);
@@ -38,7 +46,7 @@ public class SnapshotEntity {
         this.isPatrolLeader = entity instanceof Raider && ((Raider) entity).isPatrolLeader();
         this.pickupable = entity instanceof AbstractArrow && ((AbstractArrow) entity).getPickupStatus() == AbstractArrow.PickupStatus.ALLOWED;
         this.ticksLived = entity.getTicksLived();
-        this.mounted = !entity.getPassengers().isEmpty();
+        this.mounted = entity.isInsideVehicle() || !entity.getPassengers().isEmpty();
         classifications.add(entity.getType());
         if (entity instanceof Colorable) {
             DyeColor colour = ((Colorable) entity).getColor();
@@ -52,24 +60,13 @@ public class SnapshotEntity {
         if (entity instanceof Item) {
             classifications.add(((Item) entity).getItemStack().getType());
         }
-        if (entity instanceof Boat) {
-            // try to add boat type, falling back to wood type for version < 1.19
-            if (!SnapshotEntity.useWoodType.get()) {
-                try {
-                    classifications.add(((Boat) entity).getBoatType());
-                } catch (Throwable throwable) {
-                    useWoodType.set(true);
-                }
-            }
-            if (SnapshotEntity.useWoodType.get()) {
-                //noinspection deprecation
-                classifications.add(((Boat) entity).getWoodType());
-            }
+        if (entity instanceof Boat boat) {
+            classifications.add(boat.getBoatType());
         }
     }
 
     public Class<? extends Entity> getEntityClass() {
-        return entity.getClass();
+        return entityClass;
     }
 
     public int getEntityId() {
@@ -77,7 +74,7 @@ public class SnapshotEntity {
     }
 
     public EntityType getEntityType() {
-        return entity.getType();
+        return entityType;
     }
 
     public Vector getLocation() {
@@ -93,7 +90,11 @@ public class SnapshotEntity {
     }
 
     public boolean hasMetadata(String key) {
-        return entity.hasMetadata(key);
+        return metadata.contains(key);
+    }
+
+    public boolean isPluginProtected() {
+        return pluginProtected;
     }
 
     public boolean isLeashed() {

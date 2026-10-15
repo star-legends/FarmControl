@@ -1,25 +1,32 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'com.gradleup.shadow' version '9.4.2'
     id 'java'
 }
 
-group 'com.froobworld'
-version '1.3.0'
+group = 'com.froobworld'
+version = '1.4.0-leaf26.2'
 jar.enabled = false;
 
-sourceCompatibility = 1.17
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(25)
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 25
+}
 
 repositories {
     mavenLocal();
     mavenCentral()
     maven {
-        url "https://hub.spigotmc.org/nexus/content/repositories/snapshots"
+        url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots"
     }
     maven {
-        url "https://oss.sonatype.org/content/groups/public/"
+        url = "https://oss.sonatype.org/content/groups/public/"
     }
     maven {
-        url "https://repo.papermc.io/repository/maven-public/"
+        url = "https://repo.papermc.io/repository/maven-public/"
     }
     maven {
         url = 'https://repo.extendedclip.com/content/repositories/placeholderapi/'
@@ -37,16 +44,21 @@ repositories {
 
 dependencies {
     testImplementation 'junit:junit:4.13.2'
-    //compileOnly 'com.destroystokyo.paper:paper-api:1.15.2-R0.1-SNAPSHOT'
-    compileOnly 'dev.folia:folia-api:1.20.4-R0.1-SNAPSHOT'
-    compileOnly 'me.clip:placeholderapi:2.11.6'
+    compileOnly 'io.papermc.paper:paper-api:26.2.build.124-stable'
+    testImplementation 'io.papermc.paper:paper-api:26.2.build.124-stable'
+    compileOnly 'me.clip:placeholderapi:2.12.3'
+    testImplementation 'org.mockito:mockito-core:5.20.0'
     implementation 'org.jooq:joor-java-8:0.9.14'
-    implementation 'com.github.froobynooby:nab-configuration:master-SNAPSHOT' //'com.froobworld:nab-configuration:1.0.2'
+    implementation 'com.github.froobynooby:nab-configuration:7c00c954618d93fa7d8c07f4bf653a656b25aad4'
     implementation 'org.bstats:bstats-base:3.0.2'
 }
 
+def pluginVersion = version.toString()
 processResources {
-    filter { String line -> line.replace('${version}', project.version.toString()) }
+    inputs.property('version', pluginVersion)
+    filesMatching('plugin.yml') {
+        expand(version: pluginVersion)
+    }
 }
 
 shadowJar {

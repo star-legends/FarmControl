@@ -14,6 +14,7 @@ import com.froobworld.farmcontrol.controller.entity.SnapshotEntity;
 import com.froobworld.farmcontrol.hook.scheduler.SchedulerHook;
 import com.froobworld.farmcontrol.utils.MixedEntitySet;
 import org.bukkit.World;
+import org.bukkit.entity.Entity;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -28,8 +29,9 @@ public class ActionAllocationTask implements Runnable {
     private final Predicate<SnapshotEntity> shouldExcludePredicate;
     private final Set<Action> allActions;
     private final CycleTracker cycleTracker;
+    private final Predicate<Entity> customMobProtection;
 
-    public ActionAllocationTask(FarmController farmController, World world, SchedulerHook schedulerHook, Set<Trigger> triggers, List<SnapshotEntity> snapshotEntities, Map<Trigger, Set<ActionProfile>> actionProfiles, Predicate<SnapshotEntity> shouldExcludePredicate, Set<Action> allActions, CycleTracker cycleTracker) {
+    public ActionAllocationTask(FarmController farmController, World world, SchedulerHook schedulerHook, Set<Trigger> triggers, List<SnapshotEntity> snapshotEntities, Map<Trigger, Set<ActionProfile>> actionProfiles, Predicate<SnapshotEntity> shouldExcludePredicate, Set<Action> allActions, CycleTracker cycleTracker, Predicate<Entity> customMobProtection) {
         this.farmController = farmController;
         this.world = world;
         this.schedulerHook = schedulerHook;
@@ -39,6 +41,7 @@ public class ActionAllocationTask implements Runnable {
         this.shouldExcludePredicate = shouldExcludePredicate;
         this.allActions = allActions;
         this.cycleTracker = cycleTracker;
+        this.customMobProtection = customMobProtection;
     }
 
     @Override
@@ -93,7 +96,7 @@ public class ActionAllocationTask implements Runnable {
             }
         }
 
-        farmController.submitActionPerformTask(new ActionPerformTask(world, schedulerHook, triggerActionMap, unTriggerActionMap, cycleTracker));
+        farmController.submitActionPerformTask(new ActionPerformTask(world, schedulerHook, triggerActionMap, unTriggerActionMap, cycleTracker, customMobProtection));
     }
 
     private static class TriggerActionProfilePair {

@@ -1,12 +1,12 @@
 # Please visit https://github.com/froobynooby/FarmControl/wiki/Profiles for help with making profiles.
 
 profiles:
-  # Remove random movements and disable collisions of mobs in animal farms
+  # Allow small farms; reduce random movement and collisions in dense groups of 32+ animals.
   soft-nerf-animal-farms:
     group:
       types:
         - "category:animal"
-      count: 15
+      count: 32
       distance: 5
     actions:
       - remove-random-movement

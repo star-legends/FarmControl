@@ -3,16 +3,34 @@ package com.froobworld.farmcontrol.controller;
 import com.froobworld.farmcontrol.FarmControl;
 import com.froobworld.farmcontrol.config.FcConfig;
 import com.froobworld.farmcontrol.controller.entity.SnapshotEntity;
+import com.froobworld.farmcontrol.hook.CustomMobProtection;
+import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 public class ExclusionManager {
     private final FarmControl farmControl;
+    private final CustomMobProtection customMobProtection;
+    private final Set<String> warnedTypes = ConcurrentHashMap.newKeySet();
 
     public ExclusionManager(FarmControl farmControl) {
         this.farmControl = farmControl;
+        this.customMobProtection = new CustomMobProtection(Bukkit.getPluginManager(), farmControl.getLogger());
+    }
+
+    public SnapshotEntity createSnapshot(Entity entity) {
+        List<String> metadataKeys = farmControl.getFcConfig().worldSettings.of(entity.getWorld()).exclusionSettings.metadata.get();
+        return new SnapshotEntity(entity, metadataKeys, isCustomMob(entity));
+    }
+
+    public boolean isCustomMob(Entity entity) {
+        return customMobProtection.isProtected(entity);
     }
 
     public Predicate<SnapshotEntity> getExclusionPredicate(World world) {
@@ -23,11 +41,18 @@ public class ExclusionManager {
         boolean excludeNamed = exclusionSettings.named.get();
         boolean excludeTamed = exclusionSettings.tamed.get();
         boolean excludePatrolLeaders = exclusionSettings.patrolLeader.get();
-        List<String> excludeType = exclusionSettings.type.get();
+        Set<EntityType> excludeType = EntityTypeExclusions.resolve(exclusionSettings.type.get(), type -> {
+            if (warnedTypes.add(type)) {
+                farmControl.getLogger().warning("Unknown entity type in exclusion-settings.type: '" + type + "'");
+            }
+        });
         long excludeTicksLived = exclusionSettings.youngerThan.get();
         boolean excludePickupable = exclusionSettings.pickupable.get();
         boolean excludeMounted = exclusionSettings.mounted.get();
         return snapshotEntity -> {
+            if (snapshotEntity.isPluginProtected()) {
+                return true;
+            }
             if (excludeLeashed && snapshotEntity.isLeashed()) {
                 return true;
             }
@@ -57,12 +82,7 @@ public class ExclusionManager {
                     return true;
                 }
             }
-            for (String type : excludeType) {
-                if (snapshotEntity.getEntityType().toString().equalsIgnoreCase(type)) {
-                    return true;
-                }
-            }
-            return false;
+            return excludeType.contains(snapshotEntity.getEntityType());
         };
     }
 

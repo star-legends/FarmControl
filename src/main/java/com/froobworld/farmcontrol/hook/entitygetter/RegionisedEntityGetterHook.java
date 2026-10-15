@@ -58,12 +58,12 @@ public class RegionisedEntityGetterHook implements EntityGetterHook {
 
     @Override
     public CompletableFuture<List<SnapshotEntity>> getSnapshotEntities(World world, Class<?>... classes) {
-        return getMappedEntities(world, SnapshotEntity::new, classes).thenApply(ArrayList::new);
+        return getMappedEntities(world, farmControl.getExclusionManager()::createSnapshot, classes).thenApply(ArrayList::new);
     }
 
     @Override
     public CompletableFuture<List<SnapshotEntity>> getSnapshotEntities(World world) {
-        return getMappedEntities(world, SnapshotEntity::new).thenApply(ArrayList::new);
+        return getMappedEntities(world, farmControl.getExclusionManager()::createSnapshot).thenApply(ArrayList::new);
     }
 
     public static boolean isCompatible() {

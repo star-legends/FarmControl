@@ -12,6 +12,7 @@ import org.bukkit.entity.Entity;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 public class ActionPerformTask implements Runnable {
     private final World world;
@@ -19,13 +20,15 @@ public class ActionPerformTask implements Runnable {
     private final Map<SnapshotEntity, Set<TriggerActionPair>> triggerActionMap;
     private final Map<SnapshotEntity, Set<TriggerActionPair>> unTriggerActionMap;
     private final CycleTracker cycleTracker;
+    private final Predicate<Entity> customMobProtection;
 
-    public ActionPerformTask(World world, SchedulerHook schedulerHook, Map<SnapshotEntity, Set<TriggerActionPair>> triggerActionMap, Map<SnapshotEntity, Set<TriggerActionPair>> unTriggerActionMap, CycleTracker cycleTracker) {
+    public ActionPerformTask(World world, SchedulerHook schedulerHook, Map<SnapshotEntity, Set<TriggerActionPair>> triggerActionMap, Map<SnapshotEntity, Set<TriggerActionPair>> unTriggerActionMap, CycleTracker cycleTracker, Predicate<Entity> customMobProtection) {
         this.world = world;
         this.schedulerHook = schedulerHook;
         this.triggerActionMap = triggerActionMap;
         this.unTriggerActionMap = unTriggerActionMap;
         this.cycleTracker = cycleTracker;
+        this.customMobProtection = customMobProtection;
     }
 
     @Override
@@ -36,7 +39,7 @@ public class ActionPerformTask implements Runnable {
             CompletableFuture<Void> entityFuture = new CompletableFuture<>();
             ScheduledTask scheduledTask = schedulerHook.runEntityTaskAsap(() -> {
                 try {
-                    if (!entity.isValid()) {
+                    if (!entity.isValid() || customMobProtection.test(entity)) {
                         return;
                     }
                     FcData fcData = FcData.getOrCreate(entity);

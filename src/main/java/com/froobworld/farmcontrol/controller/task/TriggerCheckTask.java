@@ -67,7 +67,7 @@ public class TriggerCheckTask implements Runnable {
                     return;
                 }
                 if (!profilesToRun.isEmpty()) {
-                    executorService.submit(new ActionAllocationTask(farmController, world, farmControl.getHookManager().getSchedulerHook(), triggeredTriggers, snapshotEntities, profilesToRun, farmControl.getExclusionManager().getExclusionPredicate(world), farmControl.getActionManager().getActions(), cycleTracker));
+                    executorService.submit(new ActionAllocationTask(farmController, world, farmControl.getHookManager().getSchedulerHook(), triggeredTriggers, snapshotEntities, profilesToRun, farmControl.getExclusionManager().getExclusionPredicate(world), farmControl.getActionManager().getActions(), cycleTracker, farmControl.getExclusionManager()::isCustomMob));
                 } else {
                     cycleTracker.signalCompletion(world);
                 }
